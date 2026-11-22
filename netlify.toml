@@ -1,0 +1,17 @@
+# Static Vite build — site root must be the built `dist/` folder
+# (publishing the repo root causes Netlify "Page not found" because there is no root index.html at serve time).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+# PWA / SPA: always serve the app shell for navigation requests
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
