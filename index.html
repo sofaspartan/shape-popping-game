@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Tap colorful shapes to pop them. Add Shape Pop to your Home Screen." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Shape Pop" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>Shape Pop</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="hud" aria-label="Game status">
+        <h1 class="brand">Shape Pop</h1>
+        <p class="score" aria-live="polite">
+          <span class="score-label">Pops</span>
+          <span id="score">0</span>
+        </p>
+      </header>
+      <canvas id="game" aria-label="Shape popping playfield"></canvas>
+      <p class="hint" id="hint">Tap shapes to pop them</p>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
