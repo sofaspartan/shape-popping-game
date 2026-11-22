@@ -29,6 +29,20 @@ npm run build
 npm run preview
 ```
 
+## Deploy
+
+Production build output is **`dist/`** (contains `index.html` at the site root).
+
+Netlify is configured in `netlify.toml`:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+```
+
+If the Netlify site was publishing the repo root, you get a “Page not found” 404 — switch Publish directory to `dist` (or rely on `netlify.toml`) and trigger a new deploy.
+
 ## Stack
 
 - Vite + TypeScript
