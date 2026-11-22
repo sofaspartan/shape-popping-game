@@ -4,7 +4,14 @@ import type { ExitEffect, Particle, Piece, Shape, ShapeKind } from './types'
 
 const KINDS: ShapeKind[] = ['circle', 'square', 'hexagon', 'star']
 const EXIT_EFFECTS: ExitEffect[] = ['burst', 'shatter', 'shrink']
-const TARGET_COUNT = 11
+const TARGET_COUNT = 9
+/** Extra gap between shape collision radii so outlines/shadows don't kiss. */
+const CLEARANCE = 18
+/** Max fraction of a shape that may hang past the viewport edge. */
+const MAX_OVERHANG = 0.12
+const HUD_TOP = 88
+const HINT_BOTTOM = 56
+const PLACE_ATTEMPTS = 48
 
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min)
@@ -12,6 +19,20 @@ function rand(min: number, max: number): number {
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!
+}
+
+/** Conservative radius covering outline + rotation for packing checks. */
+function collisionRadius(size: number, kind: ShapeKind): number {
+  switch (kind) {
+    case 'square':
+      return (size / 2) * Math.SQRT2
+    case 'star':
+      return size / 2
+    case 'hexagon':
+      return size / 2
+    case 'circle':
+      return size / 2
+  }
 }
 
 function easeOutBack(t: number): number {
@@ -62,7 +83,8 @@ export class Game {
     window.addEventListener('resize', this.onResize)
     this.canvas.addEventListener('pointerdown', this.onPointer)
     for (let i = 0; i < TARGET_COUNT; i++) {
-      this.shapes.push(this.createShape(true))
+      const shape = this.createShape(true)
+      if (shape) this.shapes.push(shape)
     }
     this.running = true
     this.lastTs = performance.now()
@@ -87,18 +109,21 @@ export class Game {
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
   }
 
-  private createShape(initial = false): Shape {
-    const size = rand(56, Math.min(this.width, this.height) * 0.42)
-    // Allow partial off-screen scatter like the reference
-    const margin = size * 0.35
-    const x = rand(-margin, this.width + margin)
-    const y = rand(-margin, this.height + margin)
+  private createShape(initial = false): Shape | null {
+    const maxSize = Math.min(this.width, this.height) * 0.28
+    const minSize = Math.min(64, maxSize * 0.55)
+    // Prefer smaller sizes first so packing finds room; occasionally go bigger.
+    const size = Math.random() > 0.72 ? rand(minSize * 1.15, maxSize) : rand(minSize, maxSize * 0.85)
+    const kind = pick(KINDS)
+    const radius = collisionRadius(size, kind)
+    const placement = this.findClearSpot(radius)
+    if (!placement) return null
 
     return {
       id: this.nextId++,
-      kind: pick(KINDS),
-      x,
-      y,
+      kind,
+      x: placement.x,
+      y: placement.y,
       size,
       rotation: rand(0, Math.PI * 2),
       color: randomColor(),
@@ -111,6 +136,36 @@ export class Game {
       exitProgress: 0,
       pieces: [],
     }
+  }
+
+  private findClearSpot(radius: number): { x: number; y: number } | null {
+    const overhang = radius * MAX_OVERHANG
+    const minX = radius - overhang
+    const maxX = this.width - radius + overhang
+    const minY = Math.max(HUD_TOP + radius * 0.35, radius - overhang)
+    const maxY = this.height - HINT_BOTTOM - radius + overhang
+
+    if (maxX <= minX || maxY <= minY) return null
+
+    for (let attempt = 0; attempt < PLACE_ATTEMPTS; attempt++) {
+      const x = rand(minX, maxX)
+      const y = rand(minY, maxY)
+      if (this.isClear(x, y, radius)) return { x, y }
+    }
+    return null
+  }
+
+  private isClear(x: number, y: number, radius: number): boolean {
+    for (const other of this.shapes) {
+      if (other.exiting && other.exitProgress > 0.45) continue
+      const otherScale = other.exiting ? Math.max(other.scale, 0.35) : Math.max(other.scale, 0.9)
+      const otherR = collisionRadius(other.size * otherScale, other.kind)
+      const dx = x - other.x
+      const dy = y - other.y
+      const minDist = radius + otherR + CLEARANCE
+      if (dx * dx + dy * dy < minDist * minDist) return false
+    }
+    return true
   }
 
   private onPointer(e: PointerEvent): void {
@@ -279,8 +334,14 @@ export class Game {
 
     const live = this.shapes.filter((s) => !s.exiting).length
     if (live < TARGET_COUNT && this.spawnCooldown <= 0) {
-      this.shapes.push(this.createShape(false))
-      this.spawnCooldown = rand(0.05, 0.22)
+      const next = this.createShape(false)
+      if (next) {
+        this.shapes.push(next)
+        this.spawnCooldown = rand(0.08, 0.28)
+      } else {
+        // Field is full — wait a beat for pops to free space
+        this.spawnCooldown = rand(0.2, 0.45)
+      }
     }
   }
 
