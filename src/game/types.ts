@@ -1,7 +1,5 @@
 export type ShapeKind = 'circle' | 'square' | 'hexagon' | 'star'
 
-export type ExitEffect = 'burst' | 'shatter' | 'shrink'
-
 export interface Shape {
   id: number
   kind: ShapeKind
@@ -15,22 +13,7 @@ export interface Shape {
   wobblePhase: number
   wobbleSpeed: number
   exiting: boolean
-  exitEffect: ExitEffect | null
   exitProgress: number
-  pieces: Piece[]
-}
-
-export interface Piece {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  rotation: number
-  spin: number
-  size: number
-  alpha: number
-  color: string
-  kind: ShapeKind
 }
 
 export interface Particle {
