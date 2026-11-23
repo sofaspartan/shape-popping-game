@@ -1,6 +1,8 @@
 import type { ShapeKind } from './types'
 
 const OUTLINE = '#111111'
+/** Absolute outline thickness in CSS pixels — does not scale with shape size. */
+export const OUTLINE_WIDTH = 5
 
 export function buildPath(
   ctx: CanvasRenderingContext2D,
@@ -46,10 +48,6 @@ export function buildPath(
   }
 }
 
-export function strokeWidthFor(size: number): number {
-  return Math.max(3.5, size * 0.065)
-}
-
 export function drawShapeBody(
   ctx: CanvasRenderingContext2D,
   kind: ShapeKind,
@@ -63,9 +61,9 @@ export function drawShapeBody(
 
   if (shadow) {
     ctx.shadowColor = 'rgba(0, 0, 0, 0.28)'
-    ctx.shadowBlur = Math.max(6, size * 0.08)
-    ctx.shadowOffsetX = size * 0.045
-    ctx.shadowOffsetY = size * 0.07
+    ctx.shadowBlur = 8
+    ctx.shadowOffsetX = 5
+    ctx.shadowOffsetY = 7
   } else {
     ctx.shadowColor = 'transparent'
     ctx.shadowBlur = 0
@@ -84,7 +82,7 @@ export function drawShapeBody(
   ctx.shadowOffsetY = 0
 
   buildPath(ctx, kind, size)
-  ctx.lineWidth = strokeWidthFor(size)
+  ctx.lineWidth = OUTLINE_WIDTH
   ctx.strokeStyle = OUTLINE
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
